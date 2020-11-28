@@ -18,7 +18,7 @@ void GameInit(){
     showBall(getBall(),map);
     OpenAutoRefres();
     OpenAutoBoardTask();
-
+    openAutoMoveBallTask();
     SetAutoTask();
 
     //绑定IO处理函数

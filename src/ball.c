@@ -5,7 +5,7 @@ Ball *ball=NULL;
 Ball* getBall(){
     if(ball==NULL){
         ball = (Ball*)malloc(sizeof(Ball));
-        ball->v_x=1;
+        ball->v_x=2;
         ball->v_y=1;
         ball->x=1;
         ball->y=1;

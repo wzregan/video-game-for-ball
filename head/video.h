@@ -21,4 +21,5 @@ void EraseBoard(Board *board,GameMap * map);
 void setIntervalTask();
 void OpenAutoRefres();
 void OpenAutoBoardTask();
+void openAutoMoveBallTask();
 #endif

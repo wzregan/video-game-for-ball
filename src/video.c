@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <signal.h>
 #include "ball.h"
+extern GameMap * map;
 GameMap* MakeMap(int l,int r, int t, int b){
     GameMap *map = (GameMap*)malloc(sizeof(GameMap));
     map->Bottom = b;
@@ -50,9 +51,30 @@ void EraseBoard(Board *board,GameMap * map){
         addstr(board->dis);
     }
 }
+
+
+void showBall(Ball * ball,GameMap *map){
+    int x = map->Left + ball->x;
+    int y = map->Top + ball->y;
+    move(y,x);
+    addstr("O");
+}
+
+void EraseBall(Ball * ball,GameMap *map){
+    int x = map->Left + ball->x;
+    int y = map->Top + ball->y;
+    move(y,x);
+    if(x==map->Left||x==map->Right||y==map->Top){
+        return;
+    }
+    if(y==map->Bottom){
+        addstr("_");
+        return;
+    }
+    addstr(" ");
+}
 int timers[4][2]={{10,-1},{100,-1},{500,-1},{1000,-1}};
 void * tasks[];
-
 void timer_manager(int sig){
     for(int i=0;i<4;i++){
         if(timers[i][1]==-1){
@@ -78,11 +100,9 @@ void OpenAutoRefres(){
     timers[0][0]=10;
     timers[0][1]=0;
 }
-
-extern GameMap * map;
+//板子移动的任务
 void auto_move_board_task(){
     Board* board = GetBoard();
-
     EraseBoard(board,map);
     board->x += board->dir;
     if(board->x==0 || board->x+board->len==map->Right-map->Left){
@@ -91,6 +111,7 @@ void auto_move_board_task(){
     }
     ShowBoard(board,map);
 }
+//开启Board移动
 void OpenAutoBoardTask(){
     tasks[1] = auto_move_board_task;
     timers[1][0]=GetBoard()->speed;
@@ -106,22 +127,55 @@ void SetAutoTask(){
     timer.it_interval.tv_usec=1000;
     int c = setitimer(ITIMER_REAL,&timer,NULL);
 }
+//小球移动任务
+void auto_move_ball_task(){
+    static int step = 1;
+    Ball * ball = getBall();
+    EraseBall(ball,map);
+    if(step%1==0){
+        ball->y=ball->y+ball->v_y;
+    }
+    ball->x=ball->x+ball->v_x;
 
-void showBall(Ball * ball,GameMap *map){
-    int x = map->Left + ball->x;
-    int y = map->Top + ball->y;
-    move(y,x);
-    addstr("O");
+    showBall(ball,map);
+    Collisiondetect(ball,map,GetBoard());
+    step++;
 }
 
-void EraseBall(Ball * ball,GameMap *map){
-    int x = map->Left + ball->x;
-    int y = map->Top + ball->y;
-    move(y,x);
-    addstr(" ");
+void openAutoMoveBallTask(){
+    timers[2][0]=100;
+    timers[2][1]=0;
+    tasks[2] = auto_move_ball_task;
 }
+//关闭闹钟
+void closeTimer(){
+    struct itimerval old_timeral;
+    getitimer(ITIMER_REAL,&old_timeral);
+    struct itimerval new_timeral;
+    new_timeral.it_interval.tv_sec=0;
+    new_timeral.it_interval.tv_usec=0;
+    new_timeral.it_value.tv_sec=0;
+    new_timeral.it_value.tv_usec=0;
+    setitimer(ITIMER_REAL,&new_timeral,&old_timeral);   
+}
+//碰撞检测
+void Collisiondetect(Ball *ball,GameMap* map,Board *board){
+    if(ball->y==board->y&&ball->x>=board->x&&ball->x<=board->x+board+board->len){
+        ball->v_y=-ball->v_y;
+    }
+    if(ball->x<=1){
+        ball->v_x=-ball->v_x;
+    }
+    if(ball->x+map->Left>map->Right){
+        ball->v_x=-ball->v_x;
+    }
+    if(ball->y+map->Top>=map->Bottom+1){
+        ball->v_y=0;
+        ball->v_x=0;
+        closeTimer();
+    }
+    if(ball->y<=1){
+        ball->v_y=-ball->v_y;
+    }
 
-//设置任务
-void setIntervalTask(){
-    static unsigned i = 0;
 }
