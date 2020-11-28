@@ -1,7 +1,7 @@
 GCC=gcc
 INCLUDEDIR=./head/
 GCCFLAG=-w -I $(INCLUDEDIR)
-OBJ=enter.o
+OBJ=enter.o game.o video.o board.o ball.o
 LIB=-lcurses
 BIN=./bin/
 vpath %.c src
